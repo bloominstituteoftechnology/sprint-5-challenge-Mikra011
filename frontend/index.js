@@ -72,10 +72,6 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
 
       mentorList.innerHTML = ''
 
-      // When background is removed it is not updated!!!!
-
-      // I must make sure that every part is selected for the event listener!!!
-
       if (mentorList.style.display === 'none' || mentorList.style.display === '') {
         if (learner.mentors.length > 0) {
           learner.mentors.forEach(mentor => {
