@@ -1,44 +1,18 @@
-// const { response } = require("express");
-
-// const { default: axios } = require("axios");
-
 async function sprintChallenge5() { // Note the async keyword, in case you wish to use `await` inside sprintChallenge5
   // 👇 WORK WORK BELOW THIS LINE 👇
 
-  async function fetchLeanersData() {
-    try {
-      const response = await axios.get('http://localhost:3003/api/learners')
-      return response.data
-    } catch (err) {
-      console.log('Error fetching learnersData-->', err.message)
-      return []
-    }
-  }
+  const getLearners = await axios.get('http://localhost:3003/api/learners')
+  const getMentors = await axios.get('http://localhost:3003/api/mentors')
 
-  async function fetchMentorsData() {
-    try {
-      const response = await axios.get('http://localhost:3003/api/mentors')
-      return response.data
-    } catch (err) {
-      console.log('Error fetching mentorsData -->', err.message)
-    }
-  }
+  const learnersData = getLearners.data
+  const mentorsData = getMentors.data
 
-  const learnersData = await fetchLeanersData()
-  const mentorsData = await fetchMentorsData()
-
-  const learners = learnersData.map(learner => {
-    return {
-      ...learner,
-      mentors: learner.mentors.map(mentorId => {
-        return mentorsData.find(mentor => mentor.id === mentorId)
-      })
-    }
-  })
+  const learners = learnersData.map(learner => ({
+    ...learner,
+    mentors: learner.mentors.map(mentorId => mentorsData.find(mentor => mentor.id === mentorId))
+  }))
 
   const cardsContainer = document.querySelector('.cards')
-  cardsContainer.innerHTML = ''
-
   let selectedCard = null
 
   learners.forEach(learner => {
@@ -48,6 +22,7 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
     const email = document.createElement('div')
     const mentor = document.createElement('h4')
     const mentorList = document.createElement('ul')
+    const infoElement = document.querySelector('.info')
 
     card.classList.add('card')
     mentor.classList.add('closed')
@@ -60,6 +35,7 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
     card.appendChild(mentor)
     card.appendChild(mentorList)
 
+
     if (learner.mentors && learner.mentors.length > 0) {
       learner.mentors.forEach(mentor => {
         const mentorPerson = document.createElement('li')
@@ -71,8 +47,6 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
     cardsContainer.appendChild(card)
 
     card.addEventListener('click', () => {
-      const infoElement = document.querySelector('.info')
-
       if (selectedCard && selectedCard !== card) {
         selectedCard.classList.remove('selected')
       }
@@ -81,9 +55,9 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
       selectedCard = card
 
       if (card.classList.contains('selected')) {
-        name.textContent = `${learner.fullName}, ID ${learner.id}`;
+        name.textContent = `${learner.fullName}, ID ${learner.id}`
       } else {
-        name.textContent = `${learner.fullName}`;
+        name.textContent = `${learner.fullName}`
       }
 
       infoElement.textContent = card.classList.contains('selected')
@@ -91,21 +65,41 @@ async function sprintChallenge5() { // Note the async keyword, in case you wish 
         : "No learner is selected"
     })
 
-    mentor.addEventListener('click', () => {
-      const mentorNames = learner.mentors.map(mentor => `${mentor.firstName} ${mentor.lastName}`)
-      const displayText = mentorNames.length > 0
-        ? mentorNames.join(', ')
-        : "No mentors assigned"
-      mentorList.textContent = displayText;
-      mentorList.style.display = (mentorList.style.display === 'none')
-        ? 'block'
-        : 'none'
+    mentor.addEventListener('click', (event) => {
+      if (card.classList.contains('selected')) {
+        event.stopPropagation()
+      }
+
+      mentorList.innerHTML = ''
+
+      // When background is removed it is not updated!!!!
+
+      // I must make sure that every part is selected for the event listener!!!
+
+      if (mentorList.style.display === 'none' || mentorList.style.display === '') {
+        if (learner.mentors.length > 0) {
+          learner.mentors.forEach(mentor => {
+            const mentorPerson = document.createElement('li')
+            mentorPerson.textContent = `${mentor.firstName} ${mentor.lastName}`
+            mentorList.appendChild(mentorPerson)
+          })
+        } else {
+          const noMentorItem = document.createElement('li')
+          noMentorItem.textContent = "No mentors assigned"
+          mentorList.appendChild(noMentorItem)
+        }
+        mentorList.style.display = 'block'
+      } else {
+        mentorList.style.display = 'none'
+      }
     })
 
-    const infoElement = document.querySelector('.info');
-    infoElement.textContent = "No learner is selected";
+    infoElement.textContent = "No learner is selected"
 
   })
+
+  
+
 
   const footer = document.querySelector('footer')
   const currentYear = new Date().getFullYear()
